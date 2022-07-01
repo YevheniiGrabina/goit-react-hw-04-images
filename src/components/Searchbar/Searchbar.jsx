@@ -1,30 +1,31 @@
-import { Component } from 'react';
+import { useState } from 'react'
 import PropTypes from 'prop-types';
 import { BiSearchAlt2 } from 'react-icons/bi';
 import s from './Searchbar.module.css';
 
-class Searchbar extends Component {
-  state = { query: '' };
+const Searchbar= ({onSubmit})=> {
 
-  queryChange = evt => {
-    this.setState({ query: evt.currentTarget.value.toLowerCase() });
+    const [query, setQuery] = useState('');
+
+    const queryChange = evt => {
+      setQuery(evt.currentTarget.value.toLowerCase());
+   
   };
 
-  handleSubmit = evt => {
+  const handleSubmit = evt => {
     evt.preventDefault();
-    if (this.state.query.trim() === '') {
+    if (query.trim() === '') {
       alert('Enter your query');
       return;
     }
 
-    this.props.onSubmit(this.state.query);
+    onSubmit(query);
   };
 
-  render() {
-    const { query } = this.state;
+  
     return (
       <header className={s.Searchbar}>
-        <form className={s.SearchForm} onSubmit={this.handleSubmit}>
+        <form className={s.SearchForm} onSubmit={handleSubmit}>
           <button type="submit" className={s.SearchFormButton}>
             <BiSearchAlt2 style={{ margin: '7px auto' }} />
           </button>
@@ -36,12 +37,12 @@ class Searchbar extends Component {
             autoFocus
             placeholder="Search images and photos"
             value={query}
-            onChange={this.queryChange}
+            onChange={queryChange}
           />
         </form>
       </header>
     );
-  }
+  
 }
 Searchbar.propTypes = {
   onSubmit: PropTypes.func.isRequired,

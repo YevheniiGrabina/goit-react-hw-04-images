@@ -1,110 +1,108 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react'
 import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
-import Searchbar from './Searchbar/Searchbar';
+import LoaderSpinner from './LoaderSpinner/LoaderSpinner';
 import fetchGallery from './fetchAPI';
+import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import ImageGalleryError from './ImageGallery/ImageGalleryError';
 import Button from './Button/Button';
 import Modal from './Modal/Modal';
-import LoaderSpinner from './LoaderSpinner/LoaderSpinner';
 
-export default class App extends Component {
-  state = {
-    gallery: [],
-    query: '',
-    page: 1,
-    error: null,
-    status: 'idle',
-    isModalOpen: false,
-    total: 0,
-  };
+export const App = () => {
+  const [gallery, setGallery] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dataModalImg, setDataModalImg] = useState(null);
+  const [total, setTotal] = useState(0);
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevState.query;
-    const nextQuery = this.state.query;
+  useEffect(() => {
+    if (!query) { return };
+    setStatus('pending');
 
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
-
-    if (prevQuery !== nextQuery || (prevPage !== nextPage && nextPage !== 1)) {
-      this.setState({ status: 'pending' });
-
+    
       fetchGallery
-        .fetchAPI(nextQuery, nextPage)
+        .fetchAPI(query, page)
         .then(gallery => {
-          this.setState(prev => ({
-            gallery: [...prev.gallery, ...gallery.hits],
-            total: gallery.total,
-            status: 'resolved',
-          }));
+          setGallery(prev => prev = [...prev, ...gallery.hits]);
+          setTotal(gallery.total);
+          setStatus('resolved');
+
+          setTimeout(()=>{window.scrollBy({
+            top: document.body.clientHeight,
+            behavior: 'smooth',
+          });},100)
+          
+          
         })
-        .catch(error => this.setState({ error, status: 'rejected' }));
-    }
+        .catch(error => {
+          
+          setStatus('rejected');
+          setError(error);
+          
+          
+        });
+    
+     
+    
+  }, [query, page])
 
-    window.scrollBy({
-      top : document.body.clientHeight,
-      behavior: 'smooth',
-    });
-  }
+  
 
-  handleFormSubmit = query => {
-    if (query !== this.state.query) {
-      this.setState({ query, gallery: [], page: 1 });
+  const handleFormSubmit = searchbarQuery => {
+    if (searchbarQuery !== query) {
+      setQuery(query => query = searchbarQuery);
+      setGallery([]);
+      setPage(1); 
     }
   };
 
-  handleLoadMore = () => {
-    this.setState(({ page }) => {
-      return { page: page + 1 };
-    });
+  const handleLoadMore = () => {
+    setPage(page => page + 1);
   };
 
-  onImageClick = evt => {
+  const onImageClick = evt => {
     if (evt.target.nodeName === 'IMG') {
       const imgId = Number(evt.target.attributes.id.value);
 
-      this.state.gallery.forEach(item => {
+      gallery.forEach(item => {
         const itemId = Number(item.id);
 
         if (itemId === imgId) {
-          this.setState({
-            dataModalImg: item,
-            isModalOpen: true,
-          });
+          setDataModalImg(item);
+          setIsModalOpen(true);
+        
         }
       });
     }
-    console.log(this.state.dataModalImg);
+    
   };
 
-  closeModal = () => {
-    this.setState({
-      isModalOpen: false,
-    });
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
-  render() {
-    const { gallery, error, status, isModalOpen, total } = this.state;
-    return (
-      <>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {status === 'pending' && <LoaderSpinner />}
+  return (
+    <>
+        <Searchbar onSubmit={handleFormSubmit} />
+        {(status === 'pending' || status === 'resolved') && gallery.length > 0 && <ImageGallery gallery={gallery} onImageClick={onImageClick}/>}
 
-        {status === 'resolved' && (
-          <ImageGallery gallery={gallery} onImageClick={this.onImageClick} />
-        )}
+      
 
-        {status === 'rejected' && <ImageGalleryError message={error.message} />}
+      {status === 'rejected' && <ImageGalleryError message={error.message} />}
+      {status === 'resolved' && gallery.length === 0 && <h1>Your query not found</h1>}
+      {status === 'pending' && <LoaderSpinner/>}
         {status === 'resolved' &&
           gallery.length > 0 &&
-          gallery.length < total && <Button onClick={this.handleLoadMore} />}
+          gallery.length < total && <Button onClick={handleLoadMore} />}
         {isModalOpen && (
           <Modal
-            imgModal={this.state.dataModalImg}
-            closeModal={this.closeModal}
+            imgModal={dataModalImg}
+            closeModal={closeModal}
           />
         )}
       </>
-    );
-  }
-}
+  );
+};

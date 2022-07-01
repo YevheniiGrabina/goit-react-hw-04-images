@@ -1,17 +1,15 @@
-import { Component } from 'react';
 import PropTypes from 'prop-types';
-
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import s from './ImageGallery.module.css';
 
-class ImageGallery extends Component {
-  render() {
+const ImageGallery=({gallery, onImageClick}) =>{
+  
     return (
       <ul className={s.ImageGallery}>
-        {this.props.gallery.map(galleryItem => {
+        {gallery.map(galleryItem => {
           return (
             <ImageGalleryItem
-              onImageClick={this.props.onImageClick}
+              onImageClick={onImageClick}
               key={galleryItem.id}
               galleryItem={galleryItem}
             />
@@ -19,10 +17,10 @@ class ImageGallery extends Component {
         })}
       </ul>
     );
-  }
+  
 }
 ImageGallery.propTypes = {
-  gallery: PropTypes.shape({ id: PropTypes.number.isRequired }),
+  galleryItem: PropTypes.shape({ id: PropTypes.number.isRequired }),
 };
 
 export default ImageGallery;
